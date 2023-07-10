@@ -9,6 +9,7 @@
 
 int main()
 {
+    srand(time(nullptr));
     canvas comp(100);
     return 0;
 }

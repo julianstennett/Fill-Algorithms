@@ -19,6 +19,7 @@ public:
     void breadth(sf::Color color, sf::RenderWindow& window) {
         sf::Color base = data.getFillColor();
         if (base == color) {
+            std::cout << "done\n";
             return;
         }
         std::queue<pixel*> q;
@@ -46,9 +47,7 @@ public:
     }
 
     void depth(sf::Color color, sf::RenderWindow& window) {
-        data.setFillColor(color);
-        window.draw(data);
-        window.display();
+        return;
     }
 
     sf::RectangleShape getPixel() {
