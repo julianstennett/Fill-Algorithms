@@ -1,4 +1,5 @@
 #pragma once
+#include <chrono>
 #include "pixel.h"
 
 class canvas {
@@ -83,10 +84,14 @@ public:
             x = std::ceil(pos.x / 5) + 1;
         }
         pixel* found = pixelsTree.at(y).at(x);
+        auto start = std::chrono::high_resolution_clock::now();
         if (BFS)
             found->breadth(color, window);
         else
             found->depth(color, window);
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        std::cout << "Algorithm time: " << duration << " milliseconds. \n";
     }
 
     void display() { // SFML display and controls for the window and user interface
@@ -161,7 +166,7 @@ public:
         }
     }
 
-    void randomCircles() { // currently broken
+    void randomCircles() { // currently broken and only showing rectangles
         std::vector<sf::CircleShape> circles;
         sf::CircleShape temp;
         for (int c = 0; c < 10; c++) {

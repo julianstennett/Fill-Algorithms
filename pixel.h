@@ -19,7 +19,6 @@ public:
     void breadth(sf::Color color, sf::RenderWindow& window) {
         sf::Color base = data.getFillColor();
         if (base == color) {
-            std::cout << "done\n";
             return;
         }
         std::queue<pixel*> q;
@@ -43,7 +42,7 @@ public:
             }
             window.display(); // displays color changes by level
         }
-        std::cout << "done!\n";
+
     }
 
     void depth(sf::Color color, sf::RenderWindow& window) {
