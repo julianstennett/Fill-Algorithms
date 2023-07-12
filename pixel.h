@@ -5,7 +5,7 @@ class pixel {
     std::vector<pixel*> adjacent;
 public:
 
-    // parameratized constructor taking in positional arguements
+    // parameratized constructor taking in positional arguments
     pixel(int x, int y) {
         data.setFillColor(sf::Color::Black);
         data.setSize(sf::Vector2f(5, 5));
