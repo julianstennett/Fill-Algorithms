@@ -4,12 +4,13 @@
 #include<string>
 #include<cctype>
 #include<queue>
+#include<stack>
 #include<SFML/Graphics.hpp>
 #include "canvas.h"
 
 int main()
 {
     srand(time(nullptr));
-    canvas comp(100);
+    canvas comp(30);
     return 0;
 }
