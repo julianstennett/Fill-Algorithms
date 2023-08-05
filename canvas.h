@@ -185,7 +185,6 @@ public:
     void display() { // SFML display and controls for the window and user interface
 
         bool updateWindow = true;
-        window.setFramerateLimit(60 * density);
         while (window.isOpen()) {
             ui.display_interface(window);
 
@@ -1044,8 +1043,13 @@ public:
                 }
 
                 // drawing all pixels takes a while but prevents stuttering
-                for (pixel* c : pixelsList) { window.draw(c->getPixel()) ;}
-                //window.draw(current->getPixel());
+                if (density == 1)
+                    for (pixel* c : pixelsList) { window.draw(c->getPixel()); }
+                else {
+                    window.draw(current->getPixel());
+                    for (pixel* c : current->adjacent)
+                        window.draw(c->getPixel());
+                }
                 window.display();
 
                 current_time = clock.getElapsedTime(); // keeps track of time at start of next loop to prepare for delay if added
@@ -1214,8 +1218,13 @@ public:
                 }
 
                 // drawing all pixels takes a while but prevents stuttering
-                for (pixel* c : pixelsList) { window.draw(c->getPixel()) ;}
-                //window.draw(current->getPixel());
+                if (density == 1)
+                    for (pixel* c : pixelsList) { window.draw(c->getPixel()); }
+                else {
+                    window.draw(current->getPixel());
+                    for (pixel* c : current->adjacent)
+                        window.draw(c->getPixel());
+                }
                 window.display();
 
                 current_time = clock.getElapsedTime(); // keeps track of time at start of next loop to prepare for delay if added
