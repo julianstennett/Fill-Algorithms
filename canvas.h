@@ -102,9 +102,6 @@ public:
 
     // activates when clicked on active screen for bfs/dfs or drawing mode
     void click(bool baseColorFill, sf::Vector2i pos, bool BFS, sf::Color color, sf::RenderWindow& window) {
-        // for debugging REMOVE BEFORE SUBMITTING
-        std::cout << "X: " << pos.x << std::endl;
-        std::cout << "Y: " << pos.y << std::endl;
 
         pos.y -= 200;
         if (!((pos.x > 0 && pos.x < sideLen * pixel_dim) && (pos.y > 0 && pos.y < sideLen * pixel_dim)))
