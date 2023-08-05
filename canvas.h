@@ -689,7 +689,7 @@ public:
         int color[3] = { rand(), rand(), rand() };
         for (int c = 1; c < 80; c++) {
             temp.setSize(sf::Vector2f(400 - (5 * c), 5));
-            temp.setPosition(sf::Vector2f(250, 1050 - (5 * c)));
+            temp.setPosition(sf::Vector2f(250, 850 - (5 * c)));
             temp.setFillColor(sf::Color(color[0], color[1], color[2]));
             squares.push_back(temp);
         }
