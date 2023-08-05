@@ -120,7 +120,7 @@ public:
             x = std::ceil(pos.x / pixel_dim) + 1;
         }
 
-        pixel* found = pixelMatrix[y-1][x-1];
+        pixel* found = pixelMatrix[y - 1][x - 1];
 
         // drawing mode code
         if (drawing) {
@@ -724,7 +724,7 @@ public:
                     x = 0;
                     y += pixel_dim;
                 }
-                insertion = new pixel(x, y, pixel_dim);
+                insertion = new pixel(x, y, pixel_dim, 4);
                 pixelsList.push_back(insertion);
                 currentColumn.push_back(insertion);
                 x += pixel_dim;
@@ -783,7 +783,7 @@ public:
                     x = 0;
                     y += pixel_dim;
                 }
-                insertion = new pixel(x, y, pixel_dim);
+                insertion = new pixel(x, y, pixel_dim, 3);
                 pixelsList.push_back(insertion);
                 currentColumn.push_back(insertion);
                 x += pixel_dim;
@@ -841,7 +841,7 @@ public:
                     x = 0;
                     y += pixel_dim;
                 }
-                insertion = new pixel(x, y, pixel_dim);
+                insertion = new pixel(x, y, pixel_dim, image);
                 pixelsList.push_back(insertion);
                 currentColumn.push_back(insertion);
                 x += pixel_dim;
