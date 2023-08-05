@@ -83,38 +83,6 @@ public:
         adjacent.push_back(adj);
     }
 
-    /*
-    void breadth(sf::Color color, sf::RenderWindow& window) {
-        sf::Color base = data.getFillColor();
-        if (base == color) {
-            return;
-        }
-        std::queue<pixel*> q;
-        q.push(this);
-        while (!q.empty()) {
-            int level = q.size();
-            while (level--) {
-                pixel* curr = q.front();
-                curr->data.setFillColor(color);
-                for (pixel* adj : curr->adjacent) { // adds adjacent pixels with a matching color to the queue
-                    if (adj->data.getFillColor() == base) {
-                        adj->data.setFillColor(color);
-                        q.push(adj);
-                    }
-                    else {
-                        window.draw(adj->data);
-                    }
-                }
-                window.draw(curr->data);
-                q.pop();
-            }
-            window.display(); // displays color changes by level
-        }
-
-    }
-     */
-
-
     sf::RectangleShape getPixel() {
         return data;
     }

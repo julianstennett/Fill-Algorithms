@@ -98,7 +98,7 @@ public:
     }
 
     // activates when clicked on active screen for bfs/dfs or drawing mode
-    void click(sf::Vector2i pos, bool BFS, sf::Color color, sf::RenderWindow& window) {
+    void click(bool baseColorFill, sf::Vector2i pos, bool BFS, sf::Color color, sf::RenderWindow& window) {
         // for debugging REMOVE BEFORE SUBMITTING
         std::cout << "X: " << pos.x << std::endl;
         std::cout << "Y: " << pos.y << std::endl;
@@ -126,6 +126,15 @@ public:
         if(drawing) {
 
                 auto pos = mouse.getPosition(window);
+
+                // Get the original position of the mouse click using the scale factors for screen resizing
+                float xScale = static_cast<float>(window.getSize().x) / 1440.f;
+                float yScale = static_cast<float>(window.getSize().y) / 1125.f;
+                float originalX = static_cast<float>(event.mouseButton.x) / xScale;
+                float originalY = static_cast<float>(event.mouseButton.y) / yScale;
+                pos.x = originalX;
+                pos.y = originalY;
+
                 pos.y -= 200;
                 int y = 0, x = 0;
                 if (pos.y % pixel_dim == 0) {
@@ -157,11 +166,11 @@ public:
         auto start = std::chrono::high_resolution_clock::now();
         if (BFS)
             // found->breadth(color, window);
-            current_pixels_checked = breadth(found, ui.custom_colors, ui.gradient_colors, window, iteration_delay, current_color_mode);
+            current_pixels_checked = breadth(baseColorFill, found, ui.custom_colors, ui.gradient_colors, window, iteration_delay, current_color_mode);
 
         else
             //found->depth(color, window);
-            current_pixels_checked = depth(found, ui.custom_colors, ui.gradient_colors, window, iteration_delay, current_color_mode);
+            current_pixels_checked = depth(baseColorFill, found, ui.custom_colors, ui.gradient_colors, window, iteration_delay, current_color_mode);
 
 
         auto end = std::chrono::high_resolution_clock::now();
@@ -186,10 +195,57 @@ public:
 
                     window.close();
                 }
+                if (event.type == sf::Event::Resized) {
+                    // set screen size
+                    float screenWidth = 1440.f;
+                    float screenHeight = 1125.f;
+                    // get the resized size
+                    sf::Vector2u size = window.getSize();
+                    // setup aspect ratio
+                    float  heightRatio = screenHeight / screenWidth;
+                    float  widthRatio = screenWidth / screenHeight;
+                    // adapt the resized window to aspect ratio
+                    if (size.y * widthRatio <= size.x)
+                    {
+                        size.x = size.y * widthRatio;
+                    }
+                    else if (size.x * heightRatio <= size.y)
+                    {
+                        size.y = size.x * heightRatio;
+                    }
+                    // set the new size
+                    window.setSize(size);
+                    ui.update_stats(window, duration, iteration_delay, current_pixels_checked);
+                    quick_update();
+                }
                 if (event.type == sf::Event::MouseButtonPressed) {
+                    if (event.key.code == sf::Mouse::Right) {
+                        updateWindow = true;
+                        auto pos = mouse.getPosition(window);
+
+                        // Get the original position of the mouse click using the scale factors for a resized screen
+                        float xScale = static_cast<float>(window.getSize().x) / 1440.f;
+                        float yScale = static_cast<float>(window.getSize().y) / 1125.f;
+                        float originalX = static_cast<float>(event.mouseButton.x) / xScale;
+                        float originalY = static_cast<float>(event.mouseButton.y) / yScale;
+                        pos.x = originalX;
+                        pos.y = originalY;
+
+                        click(true, pos, BreadthFill, sf::Color::Blue, window);
+                        quick_update();
+                    }
                     if (event.key.code == sf::Mouse::Left) {
                         updateWindow = true;
                         auto pos = mouse.getPosition(window);
+
+                        // Get the original position of the mouse click using the scale factors for a resized screen
+                        float xScale = static_cast<float>(window.getSize().x) / 1440.f;
+                        float yScale = static_cast<float>(window.getSize().y) / 1125.f;
+                        float originalX = static_cast<float>(event.mouseButton.x) / xScale;
+                        float originalY = static_cast<float>(event.mouseButton.y) / yScale;
+                        pos.x = originalX;
+                        pos.y = originalY;
+
 
                         // turns on help menu if help button is clicked on
                         if (ui.help_bounds.contains(pos.x, pos.y)) {
@@ -208,7 +264,7 @@ public:
                             quick_update();
                         }
 
-                        click(pos, BreadthFill, sf::Color::Blue, window);
+                        click(false, pos, BreadthFill, sf::Color::Blue, window);
                         quick_update();
                     }
                 }
@@ -225,33 +281,157 @@ public:
                             std::cout << "bucket currently set to depth fill\n";
                     }
 
-                    if (event.key.code == sf::Keyboard::R) {
+                    else if (event.key.code >= sf::Keyboard::Num0 && event.key.code <= sf::Keyboard::Num9) {
+                        if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift))
+                        {
+                            // Shift + number key pressed
+                            int number = event.key.code - sf::Keyboard::Num0; // Convert keycode to number (0-9)
+
+                            switch (number) {
+                            case 1:
+                                current_mode = 1;
+                                ui.update_interface(window, current_mode, BreadthFill);
+                                randomSquares();
+                                updateWindow = true;
+                                break;
+                            case 2:
+                                current_mode = 2;
+                                ui.update_interface(window, current_mode, BreadthFill);
+                                randomCircles();
+                                updateWindow = true;
+                                break;
+                            case 3:
+                                sparse_maze();
+                                current_mode = 3;
+                                ui.update_interface(window, current_mode, BreadthFill);
+                                quick_update();
+                                break;
+                            case 4:
+                                dense_maze();
+                                current_mode = 4;
+                                ui.update_interface(window, current_mode, BreadthFill);
+                                quick_update();
+                                break;
+                            case 5:
+                                preset_generation(outlines.simple_triangle);
+                                current_mode = 5;
+                                ui.update_interface(window, current_mode, BreadthFill);
+                                quick_update();
+                                break;
+                            case 6:
+                                preset_generation(outlines.simple_circle);
+                                current_mode = 6;
+                                ui.update_interface(window, current_mode, BreadthFill);
+                                quick_update();
+                                updateWindow = true;
+                                break;
+                            case 7:
+                                preset_generation(outlines.simple_rectangle);
+                                current_mode = 7;
+                                ui.update_interface(window, current_mode, BreadthFill);
+                                quick_update();
+                                break;
+                            case 8:
+                                preset_generation(outlines.surprise_1);
+                                current_mode = 8;
+                                ui.update_interface(window, current_mode, BreadthFill);
+                                quick_update();
+                                break;
+                            case 9:
+                                drawing = !drawing;
+                                ui.update_color_mode(window, current_color_mode, drawing);
+                                quick_update();
+                                break;
+                            }
+                        }
+                        else {
+                            // COLOR MODES CHANGE
+                            // Rainbow Color Palette
+                            if (event.key.code == sf::Keyboard::Num0) {
+                                current_color_mode = 0;
+                                ui.update_color_mode(window, current_color_mode, drawing);
+                                quick_update();
+                            }
+                            // Red Gradient
+                            if (event.key.code == sf::Keyboard::Num1) {
+                                current_color_mode = 1;
+                                ui.update_color_mode(window, current_color_mode, drawing);
+                                quick_update();
+                            }
+                            // Orange Gradient
+                            if (event.key.code == sf::Keyboard::Num2) {
+                                current_color_mode = 2;
+                                ui.update_color_mode(window, current_color_mode, drawing);
+                                quick_update();
+                            }
+                            // Yellow Gradient
+                            if (event.key.code == sf::Keyboard::Num3) {
+                                current_color_mode = 3;
+                                ui.update_color_mode(window, current_color_mode, drawing);
+                                quick_update();
+                            }
+                            // Green Gradient
+                            if (event.key.code == sf::Keyboard::Num4) {
+                                current_color_mode = 4;
+                                ui.update_color_mode(window, current_color_mode, drawing);
+                                quick_update();
+                            }
+                            // Blue Gradient
+                            if (event.key.code == sf::Keyboard::Num5) {
+                                current_color_mode = 5;
+                                ui.update_color_mode(window, current_color_mode, drawing);
+                                quick_update();
+                            }
+                            // Indigo Gradient
+                            if (event.key.code == sf::Keyboard::Num6) {
+                                current_color_mode = 6;
+                                ui.update_color_mode(window, current_color_mode, drawing);
+                                quick_update();
+                            }
+                            // Purple Gradient
+                            if (event.key.code == sf::Keyboard::Num7) {
+                                current_color_mode = 7;
+                                ui.update_color_mode(window, current_color_mode, drawing);
+                                quick_update();
+                            }
+                            // Pink Gradient
+                            if (event.key.code == sf::Keyboard::Num8) {
+                                current_color_mode = 8;
+                                ui.update_color_mode(window, current_color_mode, drawing);
+                                quick_update();
+                            }
+                            // Gray Gradient
+                            if (event.key.code == sf::Keyboard::Num9) {
+                                current_color_mode = 9;
+                                ui.update_color_mode(window, current_color_mode, drawing);
+                                quick_update();
+                            }
+                        }
+                    }
+
+                    else if (event.key.code == sf::Keyboard::R) {
                         current_mode = 1;
                         ui.update_interface(window, current_mode, BreadthFill);
-
-                        std::cout << "random squares...\n";
                         randomSquares();
                         updateWindow = true;
                     }
 
-                    if (event.key.code == sf::Keyboard::C) {
+                    else if (event.key.code == sf::Keyboard::C) {
                         current_mode = 2;
                         ui.update_interface(window, current_mode, BreadthFill);
-
-                        std::cout << "random circles...\n";
                         randomCircles();
                         updateWindow = true;
                     }
 
                     // activates drawing mode
-                    if (event.key.code == sf::Keyboard::D) {
+                    else if (event.key.code == sf::Keyboard::D) {
                         drawing = !drawing;
                         ui.update_color_mode(window, current_color_mode, drawing);
                         quick_update();
                     }
 
                     // decreases how long an iteration of either traversal takes to execute (waits until amount of time has passed)
-                    if (event.key.code == sf::Keyboard::Down) {
+                    else if (event.key.code == sf::Keyboard::Down) {
                         if (iteration_delay >= 1) {
                             iteration_delay -= 1;
                             ui.update_stats(window, duration, iteration_delay, current_pixels_checked);
@@ -260,21 +440,21 @@ public:
                     }
 
                     // increases how long an iteration of either traversal takes to execute (waits until amount of time has passed)
-                    if (event.key.code == sf::Keyboard::Up) {
+                    else if (event.key.code == sf::Keyboard::Up) {
                         iteration_delay += 1;
                         ui.update_stats(window, duration, iteration_delay, current_pixels_checked);
                         quick_update();
                     }
 
                     // restarts the canvas with a blank slate
-                    if (event.key.code == sf::Keyboard::BackSpace) {
+                    else if (event.key.code == sf::Keyboard::BackSpace) {
                         restart_canvas();
                         ui.update_interface(window, current_mode, BreadthFill);
                         quick_update();
                     }
 
                     // activates randomized sparse "maze" mode
-                    if (event.key.code == sf::Keyboard::S) {
+                    else if (event.key.code == sf::Keyboard::S) {
                         sparse_maze();
                         current_mode = 3;
                         ui.update_interface(window, current_mode, BreadthFill);
@@ -282,7 +462,7 @@ public:
                     }
 
                     // activates randomized dense "maze" mode
-                    if (event.key.code == sf::Keyboard::A) {
+                    else if (event.key.code == sf::Keyboard::A) {
                         dense_maze();
                         current_mode = 4;
                         ui.update_interface(window, current_mode, BreadthFill);
@@ -290,95 +470,37 @@ public:
                     }
 
                     // activates simple triangle preset mode
-                    if (event.key.code == sf::Keyboard::U) {
+                    else if (event.key.code == sf::Keyboard::U) {
                         preset_generation(outlines.simple_triangle);
                         current_mode = 5;
                         ui.update_interface(window, current_mode, BreadthFill);
                         quick_update();
                     }
+
                     // activates simple circle preset mode
-                    if (event.key.code == sf::Keyboard::I) {
+                    else if (event.key.code == sf::Keyboard::I) {
                         preset_generation(outlines.simple_circle);
                         current_mode = 6;
                         ui.update_interface(window, current_mode, BreadthFill);
                         quick_update();
                     }
+
                     // activates simple rectangle preset mode
-                    if (event.key.code == sf::Keyboard::O) {
+                    else if (event.key.code == sf::Keyboard::O) {
                         preset_generation(outlines.simple_rectangle);
                         current_mode = 7;
                         ui.update_interface(window, current_mode, BreadthFill);
                         quick_update();
                     }
+
                     // activates surprise preset
-                    if (event.key.code == sf::Keyboard::Slash) {
+                    else if (event.key.code == sf::Keyboard::Slash) {
                         preset_generation(outlines.surprise_1);
                         current_mode = 8;
                         ui.update_interface(window, current_mode, BreadthFill);
                         quick_update();
                     }
 
-                    // COLOR MODES CHANGE
-                    // Rainbow Color Palette
-                    if (event.key.code == sf::Keyboard::Num0) {
-                        current_color_mode = 0;
-                        ui.update_color_mode(window, current_color_mode, drawing);
-                        quick_update();
-                    }
-                    // Red Gradient
-                    if (event.key.code == sf::Keyboard::Num1) {
-                        current_color_mode = 1;
-                        ui.update_color_mode(window, current_color_mode, drawing);
-                        quick_update();
-                    }
-                    // Orange Gradient
-                    if (event.key.code == sf::Keyboard::Num2) {
-                        current_color_mode = 2;
-                        ui.update_color_mode(window, current_color_mode, drawing);
-                        quick_update();
-                    }
-                    // Yellow Gradient
-                    if (event.key.code == sf::Keyboard::Num3) {
-                        current_color_mode = 3;
-                        ui.update_color_mode(window, current_color_mode, drawing);
-                        quick_update();
-                    }
-                    // Green Gradient
-                    if (event.key.code == sf::Keyboard::Num4) {
-                        current_color_mode = 4;
-                        ui.update_color_mode(window, current_color_mode, drawing);
-                        quick_update();
-                    }
-                    // Blue Gradient
-                    if (event.key.code == sf::Keyboard::Num5) {
-                        current_color_mode = 5;
-                        ui.update_color_mode(window, current_color_mode, drawing);
-                        quick_update();
-                    }
-                    // Indigo Gradient
-                    if (event.key.code == sf::Keyboard::Num6) {
-                        current_color_mode = 6;
-                        ui.update_color_mode(window, current_color_mode, drawing);
-                        quick_update();
-                    }
-                    // Purple Gradient
-                    if (event.key.code == sf::Keyboard::Num7) {
-                        current_color_mode = 7;
-                        ui.update_color_mode(window, current_color_mode, drawing);
-                        quick_update();
-                    }
-                    // Pink Gradient
-                    if (event.key.code == sf::Keyboard::Num8) {
-                        current_color_mode = 8;
-                        ui.update_color_mode(window, current_color_mode, drawing);
-                        quick_update();
-                    }
-                    // Gray Gradient
-                    if (event.key.code == sf::Keyboard::Num9) {
-                        current_color_mode = 9;
-                        ui.update_color_mode(window, current_color_mode, drawing);
-                        quick_update();
-                    }
                 }
                 if (updateWindow) {
                     for (pixel* p : pixelsList) { window.draw(p->getPixel()); }
@@ -458,15 +580,14 @@ public:
         current_mode = 0;
     }
 
-    // these don't work kinda rn because I have the BFS/DFS filling only white spaces -- will modify back to the original color of the first pixel when selected
-    // when I get back to working on this (@8/4/2023 - 3:59AM EST)
-    // definitely work on the circles function when you get the chance
+    // generates random overlapping squares on the canvas
     void randomSquares() {
+        restart_canvas();
         std::vector<sf::RectangleShape> squares;
         sf::RectangleShape temp;
-        for (int c = 0; c < 10; c++) {
-            temp.setSize(sf::Vector2f(rand() % sideLen * 5 + 20, rand() % sideLen * 5 + 20));
-            temp.setPosition(sf::Vector2f(rand() % sideLen * 2, rand() % sideLen * 3));
+        for (int c = 0; c < 50; c++) {
+            temp.setSize(sf::Vector2f(rand() % 800 + 500, rand() % 800 + 500));
+            temp.setPosition(sf::Vector2f(rand() % 900, rand() % 700 + 200));
             temp.setFillColor(sf::Color(rand(), rand(), rand()));
             squares.push_back(temp);
         }
@@ -480,20 +601,34 @@ public:
         }
     }
 
-    void randomCircles() { // currently broken and only showing rectangles
+    // collision logic to shade pixels within a circle's bounds
+    bool intersects(sf::CircleShape c, sf::RectangleShape r)
+    {
+        auto circle = c.getPosition();
+        auto square = r.getPosition();
+        float dx = std::abs(circle.x - square.x);
+        float dy = std::abs(circle.y - square.y);
+        float distance = std::sqrt(dx * dx + dy * dy);
+        return (distance <= c.getRadius() + r.getSize().x / 2.f);
+    }
+
+    // generates random overlapping circles on the canvas
+    void randomCircles() {
+        restart_canvas();
         std::vector<sf::CircleShape> circles;
         sf::CircleShape temp;
-        for (int c = 0; c < 10; c++) {
-            temp.setRadius(rand() % sideLen * 5 + 20);
-            temp.setPosition(sf::Vector2f(rand() % sideLen * 5, rand() % sideLen * 5));
+        for (int c = 0; c < 20; c++) {
+            int radius = rand() % 500 + 100;
+            temp.setRadius(radius);
+            temp.setOrigin(radius, radius);
+            temp.setPosition(sf::Vector2f(rand() % 900, rand() % 925 + 200));
             temp.setFillColor(sf::Color(rand(), rand(), rand()));
             circles.push_back(temp);
         }
         for (pixel* p : pixelsList) {
             for (sf::CircleShape circle : circles) {
-                if (circle.getGlobalBounds().intersects(p->getPixel().getGlobalBounds())) {
+                if (intersects(circle, p->getPixel())) {
                     p->setColor(circle.getFillColor());
-                    break;
                 }
             }
         }
@@ -680,15 +815,20 @@ public:
 
 
     // breadth-first fill that shifts through green gradient to illustrate each iteration -- pastel orange border to illustrate pixels in queue
-    int breadth(pixel* first_pixel, std::map<int, sf::Color> color_palette, std::map<int, std::vector<int>> color, sf::RenderWindow& window, int delay_time, int current_color_mode) {
+    int breadth(bool baseColorFill, pixel* first_pixel, std::map<int, sf::Color> color_palette, std::map<int, std::vector<int>> color, sf::RenderWindow& window, int delay_time, int current_color_mode) {
         int r;
         int g;
         int b;
+        sf::Color base;
 
         if (current_color_mode != 0) {
             r = color.at(current_color_mode)[0];
             g = color.at(current_color_mode)[1];
             b = color.at(current_color_mode)[2];
+        }
+
+        if (baseColorFill) {
+            base = first_pixel->color();
         }
 
 
@@ -811,6 +951,16 @@ public:
 
 
                 for (int i = 0; i < current->adjacent.size(); i++) {
+                    if (baseColorFill) {
+                        if (current->adjacent[i]->data.getFillColor() == base) {
+                            current->adjacent[i]->data.setFillColor(color_palette.at(current_color_mode % 8)); // get the first pixel colored
+                            q.push(current->adjacent[i]);
+                        }
+                        else {
+                            pixels_checked += 1;
+                        }
+                        continue;
+                    }
                     if (current->adjacent[i]->data.getFillColor() == sf::Color::White) {
                         current->adjacent[i]->data.setFillColor(color_palette.at(1)); // get the first pixel colored
                         q.push(current->adjacent[i]);
@@ -835,15 +985,20 @@ public:
     }
 
     // depth-first fill that shifts through blue/purple gradient to illustrate each iteration -- pastel purple border to illustrate pixels in stack
-    int depth(pixel* first_pixel, std::map<int, sf::Color> color_palette, std::map<int, std::vector<int>> color, sf::RenderWindow& window, int delay_time, int current_color_mode) {
+    int depth(bool baseColorFill, pixel* first_pixel, std::map<int, sf::Color> color_palette, std::map<int, std::vector<int>> color, sf::RenderWindow& window, int delay_time, int current_color_mode) {
         int r;
         int g;
         int b;
+        sf::Color base;
 
         if (current_color_mode != 0) {
             r = color.at(current_color_mode)[0];
             g = color.at(current_color_mode)[1];
             b = color.at(current_color_mode)[2];
+        }
+
+        if (baseColorFill) {
+            base = first_pixel->color();
         }
 
         int pixels_checked = 0; // stores the # of black pixels checked to return and record in statistics of process
@@ -966,6 +1121,16 @@ public:
 
                 // outlines all adjacent pixels that are to be checked next (all in stack)
                 for (int i = 0; i < current->adjacent.size(); i++) {
+                    if (baseColorFill) {
+                        if (current->adjacent[i]->data.getFillColor() == base) {
+                            current->adjacent[i]->data.setFillColor(color_palette.at(current_color_mode % 8)); // get the first pixel colored
+                            s.push(current->adjacent[i]);
+                        }
+                        else {
+                            pixels_checked += 1;
+                        }
+                        continue;
+                    }
                     if (current->adjacent[i]->data.getFillColor() == sf::Color::White) {
                         current->adjacent[i]->data.setFillColor(color_palette.at(current_color_mode%8)); // get the first pixel colored
                         s.push(current->adjacent[i]);

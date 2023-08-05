@@ -264,6 +264,7 @@ public:
         if (current_selected != current_mode) {
             selected_outline.setString(modes.at(current_mode));
             current_selected = current_mode;
+
         }
 
         display_interface(main_screen);
