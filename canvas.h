@@ -538,10 +538,18 @@ public:
         window.display();
     }
 
-    // restarts the canvas to white blank slate
-    void restart_canvas() {
+    // deallocates memory before clearing pixel storage
+    void clear() {
+        for (pixel* p : pixelsList) { 
+            delete p; 
+        }
         pixelsList.clear();
         pixelsTree.clear();
+    }
+
+    // restarts the canvas to white blank slate
+    void restart_canvas() {
+        clear();
 
         int x = 0, y = 200;
         pixel* insertion;
@@ -681,7 +689,7 @@ public:
             }
         }
     }
-
+    
     void simpleTriangle() {
         restart_canvas();
         std::vector<sf::RectangleShape> squares;
@@ -707,8 +715,7 @@ public:
 
     // generates a dense "maze"
     void dense_maze() {
-        pixelsList.clear();
-        pixelsTree.clear();
+        clear();
 
         int x = 0, y = 200;
         pixel* insertion;
@@ -767,8 +774,7 @@ public:
 
     // generates a sparse "maze"
     void sparse_maze() {
-        pixelsList.clear();
-        pixelsTree.clear();
+        clear();
 
         int x = 0, y = 200;
         pixel* insertion;
@@ -826,8 +832,7 @@ public:
     }
 
     void preset_generation(int image[]) {
-        pixelsList.clear();
-        pixelsTree.clear();
+        clear();
 
         int x = 0, y = 200;
         pixel* insertion;
