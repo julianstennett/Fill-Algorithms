@@ -36,8 +36,16 @@ public:
         if(image[i]== 0){
             data.setFillColor(sf::Color::White);
         }
-        else{
-            data.setFillColor(sf::Color::White);
+        else if (image[i] == 1) {
+            data.setFillColor(sf::Color::Black);
+        }
+        else if (image[i] == 2) {
+            // dark grey 3
+            data.setFillColor(sf::Color(102, 102, 102));
+        }
+        else {
+            // light magenta 3
+            data.setFillColor(sf::Color(234, 209, 220));
         }
 
         data.setSize(sf::Vector2f(pixel_dim, pixel_dim));

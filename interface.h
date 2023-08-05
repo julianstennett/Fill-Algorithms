@@ -3,9 +3,12 @@
 // class for initializing all SFML text, textures, and sprites for the user interface
 class interface {
     bool bfs_on = true; // tracks if bfs is on in canvas mode, else dfs -- for sprite texture purposes
+    bool drawing_on = false; // tracks if drawing mode is on -- for text interface purposes
     int current_selected = 0; // tracks what current outline should say
+    int current_color_selected = 1; // tracks what current color mode is selected for interface updating purposes
 
     std::map<int, std::string> modes; // holds all the names of modes that exist
+    std::map<int, std::string> color_modes; // holds all the names of color modes that exist
 
     // initial stats of fill application: all default until action on canvas
     int current_time = -1;
@@ -21,15 +24,18 @@ class interface {
     sf::Text title;
     sf::Text current_outline;
     sf::Text current_alg;
+    sf::Text current_color;
     sf::Text speed_of_search;
     sf::Text elapsed_time;
     sf::Text num_pixels_checked;
 
     // active text that changes throughout user interaction
     sf::Text selected_outline; // the current outline name based on shortcut pressed
+    sf::Text selected_color_mode;
     sf::Text time;
     sf::Text speed;
     sf::Text pixels_checked;
+    sf::Text drawing_mode_on;
 
     // all textures and their associated sprites for interface
     sf::Texture bfs_texture;
@@ -40,21 +46,17 @@ class interface {
     sf::Texture dfs_pressed_texture;
     sf::Sprite dfs_option;
 
-    sf::Texture fill_button_texture;
-    sf::Texture fill_pressed_texture;
-    sf::Sprite fill_button;
-
     sf::Texture help_texture;
     sf::Sprite help_button;
 
     sf::RenderWindow help_screen;
 
 public:
-    std::map<int, sf::Color> custom_colors; // colors that will be used for fill traversal visualization
+    std::map<int, sf::Color> custom_colors; // colors that will be used for fill traversal visualization (rainbow color)
+    std::map<int, std::vector<int>> gradient_colors; // for gradient modes, contains beginning colors from 1-9 options
 
     sf::FloatRect bfs_bounds;
     sf::FloatRect dfs_bounds;
-    sf::FloatRect fill_bounds;
     sf::FloatRect help_bounds;
 
     // initialize all the SFML objects for interface
@@ -71,6 +73,35 @@ public:
         custom_colors.emplace(7, sf::Color(255, 198, 255));
 
 
+
+        std::vector<int> rgb{255, 0, 0};
+        gradient_colors.emplace(1, rgb);
+        rgb.clear();
+        rgb = {255, 100, 0};
+        gradient_colors.emplace(2, rgb);
+        rgb.clear();
+        rgb = {255, 255, 0};
+        gradient_colors.emplace(3, rgb);
+        rgb.clear();
+        rgb = {0, 255, 0};
+        gradient_colors.emplace(4, rgb);
+        rgb.clear();
+        rgb = {0, 255, 255};
+        gradient_colors.emplace(5, rgb);
+        rgb.clear();
+        rgb = {0, 0, 255};
+        gradient_colors.emplace(6, rgb);
+        rgb.clear();
+        rgb = {100, 0, 255};
+        gradient_colors.emplace(7, rgb);
+        rgb.clear();
+        rgb = {255, 0, 255};
+        gradient_colors.emplace(8, rgb);
+        rgb.clear();
+        rgb = {100, 100, 100};
+        gradient_colors.emplace(9, rgb);
+
+
         screen_font_normal.loadFromFile("files/text_files/Lora-Regular.ttf");
         screen_font_italicized.loadFromFile("files/text_files/Lora-Italic.ttf");
         screen_font_bold.loadFromFile("files/text_files/Lora-Bold.ttf");
@@ -79,82 +110,92 @@ public:
         title.setFont(screen_font_bold);
         current_outline.setFont(screen_font_normal);
         current_alg.setFont(screen_font_normal);
+        current_color.setFont(screen_font_normal);
         speed_of_search.setFont(screen_font_normal);
         elapsed_time.setFont(screen_font_normal);
         num_pixels_checked.setFont(screen_font_normal);
         selected_outline.setFont(screen_font_italicized);
+        selected_color_mode.setFont(screen_font_italicized);
         time.setFont(screen_font_italicized);
         speed.setFont(screen_font_italicized);
         pixels_checked.setFont(screen_font_italicized);
+        drawing_mode_on.setFont(screen_font_bold);
 
 
         title.setString("Visual Vortex");
         current_outline.setString("Current Outline:");
         current_alg.setString("Current Algorithm:");
+        current_color.setString("Current Color Mode:");
         speed_of_search.setString("Speed of Traversal");
         elapsed_time.setString("Elapsed Time:");
-        num_pixels_checked.setString("# of Pixels Checked:");
+        num_pixels_checked.setString("# of Black Pixels Checked:");
         selected_outline.setString("N/A");
+        selected_color_mode.setString("Color Gradient Mode: Red");
         time.setString("N/A");
         speed.setString("0 seconds of delay");
         pixels_checked.setString("N/A");
+        drawing_mode_on.setString("Drawing Mode ON");
 
         title.setCharacterSize(96);
         current_outline.setCharacterSize(36);
         current_alg.setCharacterSize(36);
+        current_color.setCharacterSize(36);
         speed_of_search.setCharacterSize(36);
         elapsed_time.setCharacterSize(36);
         num_pixels_checked.setCharacterSize(36);
         selected_outline.setCharacterSize(36);
+        selected_color_mode.setCharacterSize(30);
         time.setCharacterSize(30);
         speed.setCharacterSize(30);
         pixels_checked.setCharacterSize(30);
+        drawing_mode_on.setCharacterSize(30);
 
 
         title.setFillColor(sf::Color::Black);
         current_outline.setFillColor(sf::Color::Black);
         current_alg.setFillColor(sf::Color::Black);
+        current_color.setFillColor(sf::Color::Black);
         speed_of_search.setFillColor(sf::Color::Black);
         elapsed_time.setFillColor(sf::Color::Black);
         num_pixels_checked.setFillColor(sf::Color::Black);
         selected_outline.setFillColor(sf::Color::Black);
+        selected_color_mode.setFillColor(sf::Color::Black);
         time.setFillColor(sf::Color::Black);
         speed.setFillColor(sf::Color::Black);
         pixels_checked.setFillColor(sf::Color::Black);
+        drawing_mode_on.setFillColor(sf::Color::Black);
 
 
         title.setPosition(10, 17);
         current_outline.setPosition(20, 120);
-        current_alg.setPosition(1002, 218);
-        speed_of_search.setPosition(1002, 512);
-        elapsed_time.setPosition(1002, 597);
-        num_pixels_checked.setPosition(1002, 690);
+        current_alg.setPosition(950, 218);
+        current_color.setPosition(950, 350);
+        speed_of_search.setPosition(950, 512);
+        elapsed_time.setPosition(950, 597);
+        num_pixels_checked.setPosition(950, 690);
         selected_outline.setPosition(300, 120);
-        time.setPosition(1002, 640);
-        speed.setPosition(1002, 555);
-        pixels_checked.setPosition(1002, 735);
+        selected_color_mode.setPosition(950, 400);
+        time.setPosition(950, 640);
+        speed.setPosition(950, 555);
+        pixels_checked.setPosition(950, 735);
+        drawing_mode_on.setPosition(975, 455);
 
         bfs_texture.loadFromFile("files/image_files/bfs.png");
         bfs_pressed_texture.loadFromFile("files/image_files/bfs_selected.png");
         dfs_texture.loadFromFile("files/image_files/dfs.png");
         dfs_pressed_texture.loadFromFile("files/image_files/dfs_selected.png");
-        fill_button_texture.loadFromFile("files/image_files/fill_image_button.png");
-        fill_pressed_texture.loadFromFile("files/image_files/fill_image_pressed.png");
         help_texture.loadFromFile("files/image_files/help_button.png");
 
         bfs_option.setTexture(bfs_pressed_texture);
         dfs_option.setTexture(dfs_texture);
-        fill_button.setTexture(fill_button_texture);
         help_button.setTexture(help_texture);
 
-        bfs_option.setPosition(1002, 273);
-        dfs_option.setPosition(1281, 273);
-        fill_button.setPosition(1039, 349);
+        bfs_option.setPosition(950, 273);
+        dfs_option.setPosition(1229, 273);
         help_button.setPosition(1329, 1000);
 
         bfs_bounds = bfs_option.getGlobalBounds();
         dfs_bounds = dfs_option.getGlobalBounds();
-        fill_bounds = fill_button.getGlobalBounds();
         help_bounds = help_button.getGlobalBounds();
 
         modes.emplace(0, "N/A");
@@ -166,7 +207,17 @@ public:
         modes.emplace(6, "Simple Circle");
         modes.emplace(7, "Simple Rectangle");
         modes.emplace(8, "Surprise!");
-        modes.emplace(9, "Drawing Mode");
+
+        color_modes.emplace(0, "Color Palette Mode: Rainbow");
+        color_modes.emplace(1, "Color Gradient Mode: Red");
+        color_modes.emplace(2, "Color Gradient Mode: Orange");
+        color_modes.emplace(3, "Color Gradient Mode: Yellow");
+        color_modes.emplace(4, "Color Gradient Mode: Green");
+        color_modes.emplace(5, "Color Gradient Mode: Light Blue");
+        color_modes.emplace(6, "Color Gradient Mode: Dark Blue");
+        color_modes.emplace(7, "Color Gradient Mode: Purple");
+        color_modes.emplace(8, "Color Gradient Mode: Pink");
+        color_modes.emplace(9, "Color Gradient Mode: Grey");
 
     }
 
@@ -176,19 +227,23 @@ public:
         main_screen.draw(title);
         main_screen.draw(current_outline);
         main_screen.draw(current_alg);
+        main_screen.draw(current_color);
         main_screen.draw(speed_of_search);
         main_screen.draw(elapsed_time);
         main_screen.draw(num_pixels_checked);
         main_screen.draw(selected_outline);
+        main_screen.draw(selected_color_mode);
         main_screen.draw(time);
         main_screen.draw(speed);
         main_screen.draw(pixels_checked);
 
         main_screen.draw(bfs_option);
         main_screen.draw(dfs_option);
-        main_screen.draw(fill_button);
         main_screen.draw(help_button);
 
+        if (drawing_on) {
+            main_screen.draw(drawing_mode_on);
+        }
     }
 
     // updates current outline text and or bfs/dfs selection on interface
@@ -239,6 +294,24 @@ public:
 
         display_interface(main_screen);
     }
+
+    // updates the color mode text to the appropriate color choice after user changes settings
+    void update_color_mode(sf::RenderWindow &main_screen, int color_mode, bool drawing) {
+        if (!drawing && drawing_on) {
+            drawing_on = false;
+        }
+        else if (drawing && !drawing_on) {
+            drawing_on = true;
+        }
+
+        if (current_color_selected != color_mode) {
+            selected_color_mode.setString(color_modes.at(color_mode));
+            current_color_selected = color_mode;
+        }
+
+        display_interface(main_screen);
+    }
+
 
     // opens the help menu containing shortcuts/hotkeys that can be utilized
     void display_help() {

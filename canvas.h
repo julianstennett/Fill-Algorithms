@@ -3,6 +3,7 @@
 #include <chrono>
 #include "pixel.h"
 #include "interface.h"
+#include "presets.h"
 
 class canvas {
     std::map<int, std::map<int, pixel*>> pixelsTree; // nested tree used for positional search over specified pixel log(n^(1/2)) + log(n^(1/2)) = O(log(n))
@@ -18,7 +19,8 @@ class canvas {
     bool drawing = false; // keeps track of if drawing mode is on or not
     int current_mode; // to keep track of what to display for interface current outline -> 0 = N/A (first start program)
     // 1 = "Random Rectangles", 2 = "Random Circles", 3 = "Random Sparse Maze", 4 = "Random Dense Maze", 5 = Simple Triangle
-    // 6 - Simple Circle, 7 = Simple Rectangle, 8 = Surprise, 9 = Drawing Mode;
+    // 6 - Simple Circle, 7 = Simple Rectangle, 8 = Surprise
+    int current_color_mode; // to keep track of what color mode you are in 0 = Color Palette Mode (Rainbow), 1-9 = Gradient Color Mode (R-O-Y-G-B-I-V-Pink-Grey)
 
     sf::RenderWindow window;
 
@@ -27,11 +29,13 @@ class canvas {
     int current_pixels_checked = -1;
 
     interface ui;
+    presets outlines;
 
 public:
     // parameterized constructor taking in a single screen dimension Side x Side
     canvas(int screenDimension) {
         current_mode = 0;
+        current_color_mode = 1;
         iteration_delay = 0;
 
         this->sideLen = screenDimension;
@@ -153,11 +157,11 @@ public:
         auto start = std::chrono::high_resolution_clock::now();
         if (BFS)
             // found->breadth(color, window);
-            current_pixels_checked = breadth(found, ui.custom_colors, window, iteration_delay);
+            current_pixels_checked = breadth(found, ui.custom_colors, ui.gradient_colors, window, iteration_delay, current_color_mode);
 
         else
             //found->depth(color, window);
-            current_pixels_checked = depth(found, ui.custom_colors, window, iteration_delay);
+            current_pixels_checked = depth(found, ui.custom_colors, ui.gradient_colors, window, iteration_delay, current_color_mode);
 
 
         auto end = std::chrono::high_resolution_clock::now();
@@ -242,13 +246,7 @@ public:
                     // activates drawing mode
                     if (event.key.code == sf::Keyboard::D) {
                         drawing = !drawing;
-                        if (drawing) {
-                            current_mode = 9;
-                        }
-                        else {
-                            current_mode = 0;
-                        }
-                        ui.update_interface(window, current_mode, BreadthFill);
+                        ui.update_color_mode(window, current_color_mode, drawing);
                         quick_update();
                     }
 
@@ -271,26 +269,116 @@ public:
                     // restarts the canvas with a blank slate
                     if (event.key.code == sf::Keyboard::BackSpace) {
                         restart_canvas();
-                        ui.update_stats(window, duration, iteration_delay, current_pixels_checked);
+                        ui.update_interface(window, current_mode, BreadthFill);
                         quick_update();
                     }
 
                     // activates randomized sparse "maze" mode
                     if (event.key.code == sf::Keyboard::S) {
                         sparse_maze();
-                        ui.update_stats(window, duration, iteration_delay, current_pixels_checked);
+                        current_mode = 3;
+                        ui.update_interface(window, current_mode, BreadthFill);
                         quick_update();
                     }
 
                     // activates randomized dense "maze" mode
                     if (event.key.code == sf::Keyboard::A) {
                         dense_maze();
-                        ui.update_stats(window, duration, iteration_delay, current_pixels_checked);
+                        current_mode = 4;
+                        ui.update_interface(window, current_mode, BreadthFill);
                         quick_update();
                     }
 
-                    // TO-DO: WORK ON PRESETS WILL RETURN TO FINISH
+                    // activates simple triangle preset mode
+                    if (event.key.code == sf::Keyboard::U) {
+                        preset_generation(outlines.simple_triangle);
+                        current_mode = 5;
+                        ui.update_interface(window, current_mode, BreadthFill);
+                        quick_update();
+                    }
+                    // activates simple circle preset mode
+                    if (event.key.code == sf::Keyboard::I) {
+                        preset_generation(outlines.simple_circle);
+                        current_mode = 6;
+                        ui.update_interface(window, current_mode, BreadthFill);
+                        quick_update();
+                    }
+                    // activates simple rectangle preset mode
+                    if (event.key.code == sf::Keyboard::O) {
+                        preset_generation(outlines.simple_rectangle);
+                        current_mode = 7;
+                        ui.update_interface(window, current_mode, BreadthFill);
+                        quick_update();
+                    }
+                    // activates surprise preset
+                    if (event.key.code == sf::Keyboard::Slash) {
+                        preset_generation(outlines.surprise_1);
+                        current_mode = 8;
+                        ui.update_interface(window, current_mode, BreadthFill);
+                        quick_update();
+                    }
 
+                    // COLOR MODES CHANGE
+                    // Rainbow Color Palette
+                    if (event.key.code == sf::Keyboard::Num0) {
+                        current_color_mode = 0;
+                        ui.update_color_mode(window, current_color_mode, drawing);
+                        quick_update();
+                    }
+                    // Red Gradient
+                    if (event.key.code == sf::Keyboard::Num1) {
+                        current_color_mode = 1;
+                        ui.update_color_mode(window, current_color_mode, drawing);
+                        quick_update();
+                    }
+                    // Orange Gradient
+                    if (event.key.code == sf::Keyboard::Num2) {
+                        current_color_mode = 2;
+                        ui.update_color_mode(window, current_color_mode, drawing);
+                        quick_update();
+                    }
+                    // Yellow Gradient
+                    if (event.key.code == sf::Keyboard::Num3) {
+                        current_color_mode = 3;
+                        ui.update_color_mode(window, current_color_mode, drawing);
+                        quick_update();
+                    }
+                    // Green Gradient
+                    if (event.key.code == sf::Keyboard::Num4) {
+                        current_color_mode = 4;
+                        ui.update_color_mode(window, current_color_mode, drawing);
+                        quick_update();
+                    }
+                    // Blue Gradient
+                    if (event.key.code == sf::Keyboard::Num5) {
+                        current_color_mode = 5;
+                        ui.update_color_mode(window, current_color_mode, drawing);
+                        quick_update();
+                    }
+                    // Indigo Gradient
+                    if (event.key.code == sf::Keyboard::Num6) {
+                        current_color_mode = 6;
+                        ui.update_color_mode(window, current_color_mode, drawing);
+                        quick_update();
+                    }
+                    // Purple Gradient
+                    if (event.key.code == sf::Keyboard::Num7) {
+                        current_color_mode = 7;
+                        ui.update_color_mode(window, current_color_mode, drawing);
+                        quick_update();
+                    }
+                    // Pink Gradient
+                    if (event.key.code == sf::Keyboard::Num8) {
+                        current_color_mode = 8;
+                        ui.update_color_mode(window, current_color_mode, drawing);
+                        quick_update();
+                    }
+                    // Gray Gradient
+                    if (event.key.code == sf::Keyboard::Num9) {
+                        current_color_mode = 9;
+                        ui.update_color_mode(window, current_color_mode, drawing);
+                        quick_update();
+                    }
                 }
                 if (updateWindow) {
                     for (pixel* p : pixelsList) { window.draw(p->getPixel()); }
@@ -469,8 +557,6 @@ public:
                 pixelsList[c]->border(pixelsList.at((c)+1));
             }
         }
-
-        current_mode = 4;
     }
 
     // generates a sparse "maze"
@@ -531,17 +617,82 @@ public:
                 pixelsList[c]->border(pixelsList.at((c)+1));
             }
         }
+    }
 
-        current_mode = 3;
+    void preset_generation(int image[]) {
+        pixelsList.clear();
+        pixelsTree.clear();
+
+        int x = 0, y = 200;
+        pixel* insertion;
+
+        // sets positions and places pixels in canvas objects for later access
+        for (int column = 1; column <= sideLen; column++) {
+            std::map<int, pixel*> currentColumn;
+            for (int cell = 1; cell <= sideLen; cell++) {
+                if (x == sideLen * pixel_dim) {
+                    x = 0;
+                    y += pixel_dim;
+                }
+                insertion = new pixel(x, y, pixel_dim, image);
+                pixelsList.push_back(insertion);
+                currentColumn.emplace(cell, insertion);
+                x += pixel_dim;
+            }
+            pixelsTree.emplace(column, currentColumn);
+        }
+
+        // sets each pixel's adjacent vector for filling operations
+        for (int c = 0; c < pixelsList.size(); c++) {
+            bool NotFirstRow{ true }, NotLastRow{ true }, NotFirstCol{ true }, NotLastCol{ true };
+
+            if ((c + 1) <= sideLen)
+                NotFirstRow = false;
+            if ((c + 1) > (pixelsList.size() - 1) - sideLen)
+                NotLastRow = false;
+            if ((c + 1) % sideLen == 1)
+                NotFirstCol = false;
+            if ((c + 1) % sideLen == 0)
+                NotLastCol = false;
+
+            if (NotFirstRow) {
+                pixelsList[c]->border(pixelsList.at((c)-sideLen));
+                if (NotFirstCol)
+                    pixelsList[c]->border(pixelsList.at((c)-(sideLen + 1)));
+                if (NotLastCol)
+                    pixelsList[c]->border(pixelsList.at((c)-(sideLen - 1)));
+            }
+            if (NotLastRow) {
+                pixelsList[c]->border(pixelsList.at((c)+sideLen));
+                if (NotFirstCol)
+                    pixelsList[c]->border(pixelsList.at((c)+(sideLen - 1)));
+                if (NotLastCol)
+                    pixelsList[c]->border(pixelsList.at((c)+(sideLen + 1)));
+            }
+            if (NotFirstCol) {
+                pixelsList[c]->border(pixelsList.at((c)-1));
+            }
+            if (NotLastCol) {
+                pixelsList[c]->border(pixelsList.at((c)+1));
+            }
+        }
     }
 
 
     // breadth-first fill that shifts through green gradient to illustrate each iteration -- pastel orange border to illustrate pixels in queue
-    int breadth(pixel* first_pixel, std::map<int, sf::Color> color_palette, sf::RenderWindow& window, int delay_time) {
-        int color_saturation = 255;
+    int breadth(pixel* first_pixel, std::map<int, sf::Color> color_palette, std::map<int, std::vector<int>> color, sf::RenderWindow& window, int delay_time, int current_color_mode) {
+        int r;
+        int g;
+        int b;
+
+        if (current_color_mode != 0) {
+            r = color.at(current_color_mode)[0];
+            g = color.at(current_color_mode)[1];
+            b = color.at(current_color_mode)[2];
+        }
 
 
-        int pixels_checked = 1; // stores the # of pixels checked to return and record in statistics of process
+        int pixels_checked = 0; // stores the # of black pixels checked to return and record in statistics of process
         std::queue<pixel*> q; // queue to store pixels that need to be filled in
         q.push(first_pixel);
 
@@ -559,10 +710,104 @@ public:
             if (delay_timer.asSeconds() - current_time.asSeconds()  > delay_time) {
 
                 pixel* current = q.front();
-                current->data.setFillColor(sf::Color(color_saturation, 255, 0)); // get the first pixel colored
-                //current->fill(color_palette.at(current_color_position % 8));
+                if (current_color_mode != 0) {
+                    current->data.setFillColor(sf::Color(r, g, b)); // get the first pixel colored
+                    // red
+                    if (current_color_mode == 1) {
+                        g, b += 1;
+
+                        if (g > 240) {
+                            g = 0;
+                        }
+                        if (b > 240) {
+                            b = 0;
+                        }
+                    }
+                        // orange
+                    else if (current_color_mode == 2) {
+                        g, b += 1;
+
+                        if (g > 240) {
+                            g = 100;
+                            b = 0;
+                        }
+                    }
+                        // yellow
+                    else if (current_color_mode == 3) {
+                        b += 1;
+
+                        if (b > 240) {
+                            b = 0;
+                        }
+                    }
+                        // green
+                    else if (current_color_mode == 4) {
+                        r, b += 1;
+
+                        if (r > 240) {
+                            r = 0;
+                        }
+                        if (b > 240) {
+                            b = 0;
+                        }
+                    }
+                        // blue
+                    else if (current_color_mode == 5) {
+                        r += 1;
+
+                        if (r > 240) {
+                            r = 0;
+                        }
+                    }
+                        // indigo
+                    else if (current_color_mode == 6) {
+                        r, g += 1;
+
+                        if (r > 240) {
+                            r = 0;
+                        }
+                        if (g > 240) {
+                            g = 0;
+                        }
+                    }
+                        // purple
+                    else if (current_color_mode == 7) {
+                        r, g += 1;
+
+                        if (r > 240) {
+                            r = 100;
+                            g = 0;
+                        }
+                    }
+                        // pink
+                    else if (current_color_mode == 8) {
+                        g += 1;
+
+                        if (g > 240) {
+                            g = 0;
+                        }
+                    }
+                        // grey
+                    else if (current_color_mode == 9) {
+                        r, g, b += 1;
+
+                        if (r > 240) {
+                            r = 100;
+                        }
+                        if (g > 240) {
+                            g = 100;
+                        }
+                        if (b > 240) {
+                            b = 100;
+                        }
+                    }
+                }
+                else {
+                    current->data.setFillColor(color_palette.at(current_color_position % 8));
+                    current_color_position += 1;
+                }
+
                 q.pop();
-                color_saturation -= 1; // how the gradient occurs, goes into overflow for cool effect
 
 
                 for (int i = 0; i < current->adjacent.size(); i++) {
@@ -570,7 +815,9 @@ public:
                         current->adjacent[i]->data.setFillColor(color_palette.at(1)); // get the first pixel colored
                         q.push(current->adjacent[i]);
                     }
-                    pixels_checked += 1;
+                    else if (current->adjacent[i]->data.getFillColor() == sf::Color::Black) {
+                        pixels_checked += 1;
+                    }
                 }
 
                 // drawing all pixels takes a while but prevents stuttering
@@ -588,10 +835,18 @@ public:
     }
 
     // depth-first fill that shifts through blue/purple gradient to illustrate each iteration -- pastel purple border to illustrate pixels in stack
-    int depth(pixel* first_pixel, std::map<int, sf::Color> color_palette, sf::RenderWindow& window, int delay_time) {
-        int color_saturation = 255;
+    int depth(pixel* first_pixel, std::map<int, sf::Color> color_palette, std::map<int, std::vector<int>> color, sf::RenderWindow& window, int delay_time, int current_color_mode) {
+        int r;
+        int g;
+        int b;
 
-        int pixels_checked = 1; // stores the # of pixels checked to return and record in statistics of process
+        if (current_color_mode != 0) {
+            r = color.at(current_color_mode)[0];
+            g = color.at(current_color_mode)[1];
+            b = color.at(current_color_mode)[2];
+        }
+
+        int pixels_checked = 0; // stores the # of black pixels checked to return and record in statistics of process
         std::stack<pixel*> s; // queue to store pixels that need to be filled in
         s.push(first_pixel);
 
@@ -609,18 +864,115 @@ public:
             if (delay_timer.asSeconds() - current_time.asSeconds()  > delay_time) {
 
                 pixel* current = s.top();
-                current->data.setFillColor(sf::Color(color_saturation, 0, 255)); // get the first pixel colored
-                //current->fill(color_palette.at(current_color_position % 8));
+
+                if (current_color_mode != 0) {
+                    current->data.setFillColor(sf::Color(r, g, b)); // get the first pixel colored
+                    // red
+                    if (current_color_mode == 1) {
+                        g, b += 1;
+
+                        if (g > 240) {
+                            g = 0;
+                        }
+                        if (b > 240) {
+                            b = 0;
+                        }
+                    }
+                    // orange
+                    else if (current_color_mode == 2) {
+                        g, b += 1;
+
+                        if (g > 240) {
+                            g = 100;
+                            b = 0;
+                        }
+                    }
+                    // yellow
+                    else if (current_color_mode == 3) {
+                        b += 1;
+
+                        if (b > 240) {
+                            b = 0;
+                        }
+                    }
+                    // green
+                    else if (current_color_mode == 4) {
+                        r, b += 1;
+
+                        if (r > 240) {
+                            r = 0;
+                        }
+                        if (b > 240) {
+                            b = 0;
+                        }
+                    }
+                    // blue
+                    else if (current_color_mode == 5) {
+                        r += 1;
+
+                        if (r > 240) {
+                            r = 0;
+                        }
+                    }
+                    // indigo
+                    else if (current_color_mode == 6) {
+                        r, g += 1;
+
+                        if (r > 240) {
+                            r = 0;
+                        }
+                        if (g > 240) {
+                            g = 0;
+                        }
+                    }
+                    // purple
+                    else if (current_color_mode == 7) {
+                        r, g += 1;
+
+                        if (r > 240) {
+                            r = 100;
+                            g = 0;
+                        }
+                    }
+                    // pink
+                    else if (current_color_mode == 8) {
+                        g += 1;
+
+                        if (g > 240) {
+                            g = 0;
+                        }
+                    }
+                    // grey
+                    else if (current_color_mode == 9) {
+                        r, g, b += 1;
+
+                        if (r > 240) {
+                            r = 100;
+                        }
+                        if (g > 240) {
+                            g = 100;
+                        }
+                        if (b > 240) {
+                            b = 100;
+                        }
+                    }
+                }
+                else {
+                    current->data.setFillColor(color_palette.at(current_color_position % 8));
+                    current_color_position += 1;
+                }
+
                 s.pop();
-                color_saturation -= float(1)/float(3);
 
-
+                // outlines all adjacent pixels that are to be checked next (all in stack)
                 for (int i = 0; i < current->adjacent.size(); i++) {
                     if (current->adjacent[i]->data.getFillColor() == sf::Color::White) {
-                        current->adjacent[i]->data.setFillColor(color_palette.at(6)); // get the first pixel colored
+                        current->adjacent[i]->data.setFillColor(color_palette.at(current_color_mode%8)); // get the first pixel colored
                         s.push(current->adjacent[i]);
                     }
-                    pixels_checked += 1;
+                    else if (current->adjacent[i]->data.getFillColor() == sf::Color::Black) {
+                        pixels_checked += 1;
+                    }
                 }
 
                 // drawing all pixels takes a while but prevents stuttering
