@@ -6,7 +6,7 @@
 #include "presets.h"
 
 class canvas {
-    std::map<int, std::map<int, pixel*>> pixelsTree; // nested tree used for positional search over specified pixel log(n^(1/2)) + log(n^(1/2)) = O(log(n))
+    std::vector<std::vector<pixel*>> pixelMatrix; // matrix used for random access across the canvas O(1)
     std::vector<pixel*> pixelsList; // general list used for iteration over all pixels O(n)
     int sideLen = 30;
     int pixel_dim = 30;
@@ -47,7 +47,7 @@ public:
 
         // sets positions and places pixels in canvas objects for later access
         for (int column = 1; column <= sideLen; column++) {
-            std::map<int, pixel*> currentColumn;
+            std::vector<pixel*> currentColumn;
             for (int cell = 1; cell <= sideLen; cell++) {
                 if (x == sideLen * pixel_dim) {
                     x = 0;
@@ -55,10 +55,10 @@ public:
                 }
                 insertion = new pixel(x, y, pixel_dim);
                 pixelsList.push_back(insertion);
-                currentColumn.emplace(cell, insertion);
+                currentColumn.push_back(insertion);
                 x += pixel_dim;
             }
-            pixelsTree.emplace(column, currentColumn);
+            pixelMatrix.push_back(currentColumn);
         }
 
         // sets each pixel's adjacent vector for filling operations
@@ -120,47 +120,47 @@ public:
             x = std::ceil(pos.x / pixel_dim) + 1;
         }
 
-        pixel* found = pixelsTree.at(y).at(x);
+        pixel* found = pixelMatrix[y-1][x-1];
 
         // drawing mode code
-        if(drawing) {
+        if (drawing) {
 
-                auto pos = mouse.getPosition(window);
+            auto pos = mouse.getPosition(window);
 
-                // Get the original position of the mouse click using the scale factors for screen resizing
-                float xScale = static_cast<float>(window.getSize().x) / 1440.f;
-                float yScale = static_cast<float>(window.getSize().y) / 1125.f;
-                float originalX = static_cast<float>(event.mouseButton.x) / xScale;
-                float originalY = static_cast<float>(event.mouseButton.y) / yScale;
-                pos.x = originalX;
-                pos.y = originalY;
+            // Get the original position of the mouse click using the scale factors for screen resizing
+            float xScale = static_cast<float>(window.getSize().x) / 1440.f;
+            float yScale = static_cast<float>(window.getSize().y) / 1125.f;
+            float originalX = static_cast<float>(event.mouseButton.x) / xScale;
+            float originalY = static_cast<float>(event.mouseButton.y) / yScale;
+            pos.x = originalX;
+            pos.y = originalY;
 
-                pos.y -= 200;
-                int y = 0, x = 0;
-                if (pos.y % pixel_dim == 0) {
-                    y = std::ceil(pos.y / pixel_dim);
-                }
-                else {
-                    y = std::ceil(pos.y / pixel_dim) + 1;
-                }
-                if (pos.x % pixel_dim == 0) {
-                    x = std::ceil(pos.x / pixel_dim);
-                }
-                else {
-                    x = std::ceil(pos.x / pixel_dim) + 1;
-                }
+            pos.y -= 200;
+            int y = 0, x = 0;
+            if (pos.y % pixel_dim == 0) {
+                y = std::ceil(pos.y / pixel_dim);
+            }
+            else {
+                y = std::ceil(pos.y / pixel_dim) + 1;
+            }
+            if (pos.x % pixel_dim == 0) {
+                x = std::ceil(pos.x / pixel_dim);
+            }
+            else {
+                x = std::ceil(pos.x / pixel_dim) + 1;
+            }
 
-                int i = (x - 1) % pixel_dim + (y - 1) * pixel_dim;
-                if(i > 0){
+            int i = (x - 1) % pixel_dim + (y - 1) * pixel_dim;
+            if (i > 0) {
                 std::cout << std::to_string(i) << std::endl;
                 pixelsList[i]->data.setFillColor(sf::Color::Black);
-                for (pixel *c: pixelsList) { window.draw(c->getPixel()); }
+                for (pixel* c : pixelsList) { window.draw(c->getPixel()); }
                 window.display();
-                }
-
-                return;
-
             }
+
+            return;
+
+        }
 
 
         auto start = std::chrono::high_resolution_clock::now();
@@ -536,11 +536,11 @@ public:
 
     // deallocates memory before clearing pixel storage
     void clear() {
-        for (pixel* p : pixelsList) { 
-            delete p; 
+        for (pixel* p : pixelsList) {
+            delete p;
         }
         pixelsList.clear();
-        pixelsTree.clear();
+        pixelMatrix.clear();
     }
 
     // restarts the canvas to white blank slate
@@ -552,7 +552,7 @@ public:
 
         // sets positions and places pixels in canvas objects for later access
         for (int column = 1; column <= sideLen; column++) {
-            std::map<int, pixel*> currentColumn;
+            std::vector<pixel*> currentColumn;
             for (int cell = 1; cell <= sideLen; cell++) {
                 if (x == sideLen * pixel_dim) {
                     x = 0;
@@ -560,10 +560,10 @@ public:
                 }
                 insertion = new pixel(x, y, pixel_dim);
                 pixelsList.push_back(insertion);
-                currentColumn.emplace(cell, insertion);
+                currentColumn.push_back(insertion);
                 x += pixel_dim;
             }
-            pixelsTree.emplace(column, currentColumn);
+            pixelMatrix.push_back(currentColumn);
         }
 
         // sets each pixel's adjacent vector for filling operations
@@ -685,7 +685,7 @@ public:
             }
         }
     }
-    
+
     void simpleTriangle() {
         restart_canvas();
         std::vector<sf::RectangleShape> squares;
@@ -718,18 +718,18 @@ public:
 
         // sets positions and places pixels in canvas objects for later access
         for (int column = 1; column <= sideLen; column++) {
-            std::map<int, pixel*> currentColumn;
+            std::vector<pixel*> currentColumn;
             for (int cell = 1; cell <= sideLen; cell++) {
                 if (x == sideLen * pixel_dim) {
                     x = 0;
                     y += pixel_dim;
                 }
-                insertion = new pixel(x, y, pixel_dim, 4);
+                insertion = new pixel(x, y, pixel_dim);
                 pixelsList.push_back(insertion);
-                currentColumn.emplace(cell, insertion);
+                currentColumn.push_back(insertion);
                 x += pixel_dim;
             }
-            pixelsTree.emplace(column, currentColumn);
+            pixelMatrix.push_back(currentColumn);
         }
 
         // sets each pixel's adjacent vector for filling operations
@@ -777,18 +777,18 @@ public:
 
         // sets positions and places pixels in canvas objects for later access
         for (int column = 1; column <= sideLen; column++) {
-            std::map<int, pixel*> currentColumn;
+            std::vector<pixel*> currentColumn;
             for (int cell = 1; cell <= sideLen; cell++) {
                 if (x == sideLen * pixel_dim) {
                     x = 0;
                     y += pixel_dim;
                 }
-                insertion = new pixel(x, y, pixel_dim, 3);
+                insertion = new pixel(x, y, pixel_dim);
                 pixelsList.push_back(insertion);
-                currentColumn.emplace(cell, insertion);
+                currentColumn.push_back(insertion);
                 x += pixel_dim;
             }
-            pixelsTree.emplace(column, currentColumn);
+            pixelMatrix.push_back(currentColumn);
         }
 
         // sets each pixel's adjacent vector for filling operations
@@ -835,18 +835,18 @@ public:
 
         // sets positions and places pixels in canvas objects for later access
         for (int column = 1; column <= sideLen; column++) {
-            std::map<int, pixel*> currentColumn;
+            std::vector<pixel*> currentColumn;
             for (int cell = 1; cell <= sideLen; cell++) {
                 if (x == sideLen * pixel_dim) {
                     x = 0;
                     y += pixel_dim;
                 }
-                insertion = new pixel(x, y, pixel_dim, image);
+                insertion = new pixel(x, y, pixel_dim);
                 pixelsList.push_back(insertion);
-                currentColumn.emplace(cell, insertion);
+                currentColumn.push_back(insertion);
                 x += pixel_dim;
             }
-            pixelsTree.emplace(column, currentColumn);
+            pixelMatrix.push_back(currentColumn);
         }
 
         // sets each pixel's adjacent vector for filling operations
@@ -919,7 +919,7 @@ public:
 
             sf::Time delay_timer = clock.getElapsedTime(); // get present time to check for how long to delay iteration for
 
-            if (delay_timer.asSeconds() - current_time.asSeconds()  > delay_time) {
+            if (delay_timer.asSeconds() - current_time.asSeconds() > delay_time) {
 
                 pixel* current = q.front();
                 if (current_color_mode != 0) {
@@ -935,7 +935,7 @@ public:
                             b = 0;
                         }
                     }
-                        // orange
+                    // orange
                     else if (current_color_mode == 2) {
                         g, b += 1;
 
@@ -944,7 +944,7 @@ public:
                             b = 0;
                         }
                     }
-                        // yellow
+                    // yellow
                     else if (current_color_mode == 3) {
                         b += 1;
 
@@ -952,7 +952,7 @@ public:
                             b = 0;
                         }
                     }
-                        // green
+                    // green
                     else if (current_color_mode == 4) {
                         r, b += 1;
 
@@ -963,7 +963,7 @@ public:
                             b = 0;
                         }
                     }
-                        // blue
+                    // blue
                     else if (current_color_mode == 5) {
                         r += 1;
 
@@ -971,7 +971,7 @@ public:
                             r = 0;
                         }
                     }
-                        // indigo
+                    // indigo
                     else if (current_color_mode == 6) {
                         r, g += 1;
 
@@ -982,7 +982,7 @@ public:
                             g = 0;
                         }
                     }
-                        // purple
+                    // purple
                     else if (current_color_mode == 7) {
                         r, g += 1;
 
@@ -991,7 +991,7 @@ public:
                             g = 0;
                         }
                     }
-                        // pink
+                    // pink
                     else if (current_color_mode == 8) {
                         g += 1;
 
@@ -999,7 +999,7 @@ public:
                             g = 0;
                         }
                     }
-                        // grey
+                    // grey
                     else if (current_color_mode == 9) {
                         r, g, b += 1;
 
@@ -1093,7 +1093,7 @@ public:
 
             sf::Time delay_timer = clock.getElapsedTime(); // get present time to check for how long to delay iteration for
 
-            if (delay_timer.asSeconds() - current_time.asSeconds()  > delay_time) {
+            if (delay_timer.asSeconds() - current_time.asSeconds() > delay_time) {
 
                 pixel* current = s.top();
 
@@ -1209,7 +1209,7 @@ public:
                         continue;
                     }
                     if (current->adjacent[i]->data.getFillColor() == sf::Color::White) {
-                        current->adjacent[i]->data.setFillColor(color_palette.at(current_color_mode%8)); // get the first pixel colored
+                        current->adjacent[i]->data.setFillColor(color_palette.at(current_color_mode % 8)); // get the first pixel colored
                         s.push(current->adjacent[i]);
                     }
                     else if (current->adjacent[i]->data.getFillColor() == sf::Color::Black) {
