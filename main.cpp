@@ -10,7 +10,8 @@
 
 int main()
 {
+    int pixelDesnsity[5] {1, 3, 5, 10, 15};
     srand(time(nullptr));
-    canvas comp(30);
+    canvas comp(pixelDesnsity[0]);
     return 0;
 }

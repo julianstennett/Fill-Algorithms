@@ -8,8 +8,9 @@
 class canvas {
     std::map<int, std::map<int, pixel*>> pixelsTree; // nested tree used for positional search over specified pixel log(n^(1/2)) + log(n^(1/2)) = O(log(n))
     std::vector<pixel*> pixelsList; // general list used for iteration over all pixels O(n)
-    int sideLen = 0;
+    int sideLen = 30;
     int pixel_dim = 30;
+    int density = 0;
     bool BreadthFill = true;
 
     sf::Event event;
@@ -33,12 +34,14 @@ class canvas {
 
 public:
     // parameterized constructor taking in a single screen dimension Side x Side
-    canvas(int screenDimension) {
+    canvas(int density) {
         current_mode = 0;
         current_color_mode = 1;
         iteration_delay = 0;
 
-        this->sideLen = screenDimension;
+        this->sideLen *= density;
+        this->pixel_dim /= density;
+        this->density = density;
         int x = 0, y = 200;
         pixel* insertion;
 
@@ -150,7 +153,7 @@ public:
                     x = std::ceil(pos.x / pixel_dim) + 1;
                 }
 
-                int i = (x - 1) % 30 + (y - 1) * 30;
+                int i = (x - 1) % pixel_dim + (y - 1) * pixel_dim;
                 if(i > 0){
                 std::cout << std::to_string(i) << std::endl;
                 pixelsList[i]->data.setFillColor(sf::Color::Black);
@@ -185,7 +188,7 @@ public:
     void display() { // SFML display and controls for the window and user interface
 
         bool updateWindow = true;
-        window.setFramerateLimit(60);
+        window.setFramerateLimit(60 * density);
         while (window.isOpen()) {
             ui.display_interface(window);
 
@@ -313,20 +316,28 @@ public:
                                 quick_update();
                                 break;
                             case 5:
-                                preset_generation(outlines.simple_triangle);
+                                if (density == 1)
+                                    preset_generation(outlines.simple_triangle);
+                                else
+                                    simpleTriangle();
                                 current_mode = 5;
                                 ui.update_interface(window, current_mode, BreadthFill);
                                 quick_update();
                                 break;
                             case 6:
-                                preset_generation(outlines.simple_circle);
+                                if (density == 1)
+                                    preset_generation(outlines.simple_circle);
+                                else
+                                    simpleCircle();
                                 current_mode = 6;
                                 ui.update_interface(window, current_mode, BreadthFill);
                                 quick_update();
-                                updateWindow = true;
                                 break;
                             case 7:
-                                preset_generation(outlines.simple_rectangle);
+                                if (density == 1)
+                                    preset_generation(outlines.simple_rectangle);
+                                else
+                                    simpleSquare();
                                 current_mode = 7;
                                 ui.update_interface(window, current_mode, BreadthFill);
                                 quick_update();
@@ -471,7 +482,10 @@ public:
 
                     // activates simple triangle preset mode
                     else if (event.key.code == sf::Keyboard::U) {
-                        preset_generation(outlines.simple_triangle);
+                        if (density == 1)
+                            preset_generation(outlines.simple_triangle);
+                        else
+                            simpleTriangle();
                         current_mode = 5;
                         ui.update_interface(window, current_mode, BreadthFill);
                         quick_update();
@@ -479,7 +493,10 @@ public:
 
                     // activates simple circle preset mode
                     else if (event.key.code == sf::Keyboard::I) {
-                        preset_generation(outlines.simple_circle);
+                        if (density == 1)
+                            preset_generation(outlines.simple_circle);
+                        else
+                            simpleCircle();
                         current_mode = 6;
                         ui.update_interface(window, current_mode, BreadthFill);
                         quick_update();
@@ -487,7 +504,10 @@ public:
 
                     // activates simple rectangle preset mode
                     else if (event.key.code == sf::Keyboard::O) {
-                        preset_generation(outlines.simple_rectangle);
+                        if (density == 1)
+                            preset_generation(outlines.simple_rectangle);
+                        else
+                            simpleSquare();
                         current_mode = 7;
                         ui.update_interface(window, current_mode, BreadthFill);
                         quick_update();
@@ -633,6 +653,57 @@ public:
             }
         }
     }
+
+    void simpleSquare() {
+        restart_canvas();
+        sf::RectangleShape sq;
+        sq.setSize(sf::Vector2f(400, 400));
+        sq.setOrigin(200, 200);
+        sq.setPosition(450, 662.5);
+        sq.setFillColor(sf::Color(rand(), rand(), rand()));
+        for (pixel* p : pixelsList) {
+            if (sq.getGlobalBounds().intersects(p->getPixel().getGlobalBounds())) {
+                p->setColor(sq.getFillColor());
+            }
+        }
+    }
+
+    void simpleCircle() {
+        restart_canvas();
+        sf::CircleShape c;
+        c.setRadius(250);
+        c.setOrigin(250, 250);
+        c.setPosition(450, 662.5);
+        c.setFillColor(sf::Color(rand(), rand(), rand()));
+        for (pixel* p : pixelsList) {
+            if (intersects(c, p->getPixel())) {
+                p->setColor(c.getFillColor());
+            }
+        }
+    }
+
+    void simpleTriangle() {
+        restart_canvas();
+        std::vector<sf::RectangleShape> squares;
+        sf::RectangleShape temp;
+        int color[3] = { rand(), rand(), rand() };
+        for (int c = 1; c < 80; c++) {
+            temp.setSize(sf::Vector2f(400 - (5 * c), 5));
+            temp.setPosition(sf::Vector2f(250, 1050 - (5 * c)));
+            temp.setFillColor(sf::Color(color[0], color[1], color[2]));
+            squares.push_back(temp);
+        }
+        for (pixel* p : pixelsList) {
+            for (sf::RectangleShape square : squares) {
+                if (square.getGlobalBounds().intersects(p->getPixel().getGlobalBounds())) {
+                    p->setColor(square.getFillColor());
+                    break;
+                }
+            }
+        }
+
+    }
+
 
     // generates a dense "maze"
     void dense_maze() {
